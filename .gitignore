@@ -7,3 +7,10 @@ frontend/build/
 
 # Mengabaikan file konfigurasi lokal
 frontend/.env
+
+# Mengabaikan file sampah dari backend (Node.js / Python / dll)
+backend/node_modules/
+backend/dist/
+backend/venv/
+backend/.env
+backend/__pycache__/
