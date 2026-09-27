@@ -4,6 +4,7 @@ import { users, type NewUser } from "../db/schema.js"; // Import the users table
 import { eq } from "drizzle-orm";
 import bcryptjs from "bcryptjs"; // Import the bcrypt library for password hashing
 import jwt from "jsonwebtoken"; // Import the jsonwebtoken library for generating and verifying JSON Web Tokens
+import { authenticateToken, type AuthenticatedRequest } from "../middleware/auth.js";
 
 // Create a new instance of the Router class to define authentication-related routes
 const authRouter = Router();
@@ -100,8 +101,22 @@ authRouter.post("tokenIsValid", async (req, res) => {
 });
 
 // Define a GET route for the root path ("/") of the authRouter. When this route is accessed, it sends a response indicating that the auth route is working.
-authRouter.get("/", (req, res) => {
-  res.send("Auth route is working!");
+authRouter.get("/", authenticateToken, async(req: AuthenticatedRequest, res) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({ error: "Unauthorized" }); // Send a 401 Unauthorized response if the user is not authenticated
+        }
+
+        const user = await db.select().from(users).where(eq(users.id, req.user)); // Retrieve the authenticated user's information from the database
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found" }); // Send a 404 Not Found response if the user does not exist
+        }
+
+        res.status(200).json({...user, token: req.token }); // Send a 200 OK response with the authenticated user's information
+    } catch (e) {
+        res.status(500).json({ error: e }); // Send a 500 Internal Server Error response if an error occurs
+    }
 });
 
 export default authRouter;
