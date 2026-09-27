@@ -1,0 +1,40 @@
+# This docker-compose.yaml file defines two services: backend and db. The backend service is built from the Dockerfile in the current directory and exposes port 8000. The db service uses the official PostgreSQL 15 image, sets up a database with a user and password, and exposes port 5432.
+# Services is a top-level key that defines the services that make up the application. Each service is defined by a name and a set of configuration options.
+services: 
+  # The backend service is defined here.
+  backend:
+    # The container_name option specifies the name of the container that will be created for this service.
+    container_name: backend_container
+    # The build option specifies the context and Dockerfile to use to build the image for this service.
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    # The ports option maps port 8000 on the host to port 8000 on the container, allowing access to the backend service from outside the container.
+    ports:
+      - "8000:8000"
+    # The environment option sets environment variables for the container. In this case, it sets the PORT and DATABASE_URL variables.
+    environment:
+      - PORT=8000
+      - DATABASE_URL=postgresql://postgres:test123:5432/mydb
+    # The depends_on option specifies that the backend service depends on the db service, ensuring that the db service is started before the backend service.
+    depends_on:
+      - db
+    # The volumes option mounts the current directory (./) to /app in the container, allowing changes made to the code on the host to be reflected in the container. It also mounts /app/node_modules to prevent overwriting the node_modules directory in the container with the one from the host.
+    volumes:
+      - ./:/app
+      - /app/node_modules
+
+  # The db service is defined here.
+  db:
+    # The image option specifies the Docker image to use for this service. In this case, it uses the official PostgreSQL 15 image.
+    image: postgres:15
+    container_name: postgres_container
+    # The restart option specifies that the container should always restart if it stops, ensuring that the database service is always available.
+    restart: always
+    # The environment option sets environment variables for the container. In this case, it sets the POSTGRES_USER, POSTGRES_PASSWORD, and POSTGRES_DB variables.
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: test123
+      POSTGRES_DB: mydb
+    ports:
+      - "5432:5432"
