@@ -15,7 +15,7 @@ services:
     # The environment option sets environment variables for the container. In this case, it sets the PORT and DATABASE_URL variables.
     environment:
       - PORT=8000
-      - DATABASE_URL=postgresql://postgres:test123:5432/mydb
+      - DATABASE_URL=postgresql://postgres:test123@db:5432/mydb
     # The depends_on option specifies that the backend service depends on the db service, ensuring that the db service is started before the backend service.
     depends_on:
       - db

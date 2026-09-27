@@ -3,5 +3,5 @@
     "ext": "ts",
     "legacyWatch": true,
     "ignore": ["dist/*"],
-    "exec": "ts-node src/index.ts"
+    "exec": "node --loader ts-node/esm src/index.ts"
 }
