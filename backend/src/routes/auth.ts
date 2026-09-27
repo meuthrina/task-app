@@ -3,6 +3,7 @@ import { db } from "../db/index.js"; // Import the database instance from the db
 import { users, type NewUser } from "../db/schema.js"; // Import the users table schema from the schema module
 import { eq } from "drizzle-orm";
 import bcryptjs from "bcryptjs"; // Import the bcrypt library for password hashing
+import jwt from "jsonwebtoken"; // Import the jsonwebtoken library for generating and verifying JSON Web Tokens
 
 // Create a new instance of the Router class to define authentication-related routes
 const authRouter = Router();
@@ -61,9 +62,40 @@ authRouter.post("/login", async (req: Request<{}, {}, LoginRequestBody>, res: Re
             return res.status(400).json({ error: "Incorrect password" }); // Send a 400 Bad Request response if the password is invalid
         }
 
-        res.status(200).json({ message: "Login successful", user }); // Send a 200 OK response with a success message and the logged-in user
+        // Generate a JSON Web Token (JWT) for the authenticated user. The token contains the user's ID and is signed with a secret key.
+        const token = jwt.sign({ id: user.id }, "this_is_a_secret_key");
+
+        res.status(200).json({ message: "Login successful", token, ...user }); // Send a 200 OK response with a success message and the logged-in user
     } catch (e) {
         res.status(500).json({ error: e }); // Send a 500 Internal Server Error response if an error occurs
+    }
+});
+
+authRouter.post("tokenIsValid", async (req, res) => {
+    try {
+        const token = req.header("x-auth-token"); // Retrieve the token from the request header
+
+        if (!token) {
+            return res.json(false); // Send a response indicating that the token is not valid
+        }
+
+        const verified = jwt.verify(token, "this_is_a_secret_key"); // Verify the token using the secret key
+
+        if (!verified) {
+            return res.json(false); // Send a response indicating that the token is not valid
+        }
+
+        const verifiedUserId = (verified as { id: string }).id; // Extract the user ID from the verified token
+
+        const user = await db.select().from(users).where(eq(users.id, verifiedUserId)); // Retrieve the user associated with the verified token from the database
+
+        if (!user) {
+            return res.json(false); // Send a response indicating that the token is not valid
+        }
+
+        return res.json(true); // Send a response indicating that the token is valid
+    } catch (e) {
+        res.status(500).json(false); // Send a 500 Internal Server Error response if an error occurs
     }
 });
 
